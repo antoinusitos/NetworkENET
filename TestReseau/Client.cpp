@@ -9,9 +9,9 @@ Client::Client() : _clientName("UNKNOWN")
 {
 	InitName();
 
-	_inputManager = new InputManager();
-	_networkManager = new NetworkManager;
-	_renderManager = new RenderManager;
+	_inputManager = new InputManager(this);
+	_networkManager = new NetworkManager(this);
+	_renderManager = new RenderManager();
 
 }
 
@@ -50,6 +50,7 @@ RenderManager* Client::GetRenderManager()
 
 void Client::Run()
 {
+
 	// galeplay loop
 	_isRunning = true;
 
@@ -61,9 +62,25 @@ void Client::Run()
 	while (_isRunning && _renderManager->IsWindowOpen())
 	{
 		// do stuff here
+
+		// Get Input from keyboard
+		_inputManager->Execute(_renderManager->GetWindow());
+		// Get the text in input
+		_renderManager->UpdateInputText(_inputManager->GetText());
+		// Draw the window and the text
 		_renderManager->Draw();
 
 	}
+}
+
+void Client::Stop()
+{
+	_isRunning = false;
+}
+
+void Client::Send(std::string text)
+{
+	_networkManager->SendText(text);
 }
 
 void Client::InitName()
@@ -79,4 +96,3 @@ void Client::InitName()
 
 	fprintf(stderr, "connecting... \n");
 }
-

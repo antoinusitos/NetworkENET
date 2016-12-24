@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 class NetworkManager;
 class InputManager;
 class RenderManager;
@@ -18,6 +20,10 @@ public:
 	RenderManager* GetRenderManager();
 
 	void Run();
+
+	void Stop();
+
+	void Send(std::string text);
 
 private:
 	char* _clientName;

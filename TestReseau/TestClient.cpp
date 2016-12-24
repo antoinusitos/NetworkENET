@@ -81,8 +81,17 @@ void HandlesInput(ENetHost* client)
 	}
 }
 
+
+void lol()
+{
+	printf("lol!");
+}
+
 int main(int argc, char* argv[]) 
 {
+	std::thread l(lol);
+	l.detach();
+
 	Client* c = new Client();
 	c->Run();
 

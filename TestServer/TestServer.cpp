@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 					event.peer->address.host,
 					event.peer->address.port);
 				/* Store any relevant client information here. */
-				//event.peer->data = "antoine";
+				event.peer->data = "client information";
 
 				break;
 
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 					/* One could also broadcast the packet by         */
 					/* enet_host_broadcast (host, 0, packet);         */
 
-					//enet_peer_send(peer, 0, packet);
+					enet_peer_send(event.peer, 0, packet);
 					enet_host_broadcast(server, 0, packet);
 
 					/* One could just use enet_host_service() instead. */

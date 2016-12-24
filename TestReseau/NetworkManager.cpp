@@ -3,22 +3,29 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
+#include "Client.h"
 
-NetworkManager::NetworkManager()
+NetworkManager::NetworkManager(Client* theOwner)
 {
-	
+	_owner = theOwner;
 }
 
 
 NetworkManager::~NetworkManager()
 {
 	enet_host_destroy(_client);
-//	delete _client;
-	delete _first;
+	if (_first)
+	{
+		_first->join();
+		delete _first;
+	}
 }
 
 void NetworkManager::InitializeNetwork()
 {
+
+	//std::thread l(lol);
+
 	if (enet_initialize() != 0)
 	{
 		fprintf(stderr, "An error occurred while initializing ENet.\n");
@@ -57,14 +64,10 @@ void NetworkManager::InitializeNetwork()
 	if (enet_host_service(_client, &event, 5000) > 0 &&
 		event.type == ENET_EVENT_TYPE_CONNECT)
 	{
-		puts("Connection to some.server.net:1234 succeeded.");
+		puts("Connection to localhost:1234 succeeded.");
 
 		_first = new std::thread(&NetworkManager::HandlesEvent, this);
-		//std::thread second(HandlesInput, client);
-
-		//_first->join();
-		//second.join();
-
+		_first->detach();
 	}
 	else
 	{
@@ -72,19 +75,22 @@ void NetworkManager::InitializeNetwork()
 		/* received. Reset the peer in the event the 5 seconds   */
 		/* had run out without any significant event.            */
 		enet_peer_reset(peer);
-		puts("Connection to some.server.net:1234 failed.");
+		puts("Connection to localhost:1234 failed.");
 	}
 }
 
 void NetworkManager::JoinThreads()
 {
-	if(_first != nullptr)
-		_first->join();
+	if (_first != nullptr)
+	{
+		//_first->join();
+	}
 }
 
 void NetworkManager::HandlesEvent()
 {
 	/** HANDLES THE EVENT **/
+	printf("EVENT !");
 
 	ENetEvent event;
 	/* Wait up to 1000 milliseconds for an event. */
@@ -100,11 +106,11 @@ void NetworkManager::HandlesEvent()
 			event.peer->data = "Client information";
 			break;
 		case ENET_EVENT_TYPE_RECEIVE:
-			/*printf("A packet of length %u containing %s was received from %s on channel %u.\n",
+			printf("A packet of length %u containing %s was received from %s on channel %u.\n",
 			event.packet->dataLength,
 			event.packet->data,
 			event.peer->data,
-			event.channelID);*/
+			event.channelID);
 			printf("%s \n", (char*)event.packet->data);
 			/* Clean up the packet now that we're done using it. */
 			enet_packet_destroy(event.packet);
@@ -119,14 +125,12 @@ void NetworkManager::HandlesEvent()
 	}
 }
 
-void NetworkManager::HandlesInput()
+void NetworkManager::SendText(std::string text)
 {
-	std::string strtmp;
-	std::string name("testName");
-	std::getline(std::cin, strtmp);
-	name += " : " + strtmp;
+	std::string name = _owner->GetClientName();
+	name += " : " + text;
 
-	if (strtmp != "")
+	if (text != "")
 	{
 		/* Create a reliable packet of size 7 containing "packet\0" */
 		ENetPacket * packet = enet_packet_create(name.c_str(),
@@ -135,7 +139,7 @@ void NetworkManager::HandlesInput()
 		/* Extend the packet so and append the string "foo", so it now */
 		/* contains "packetfoo\0"                                      */
 		enet_packet_resize(packet, strlen(name.c_str()) + 1);
-		
+
 		/* Send the packet to the peer over channel id 0. */
 		/* One could also broadcast the packet by         */
 		/* enet_host_broadcast (host, 0, packet);         */
