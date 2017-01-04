@@ -66,24 +66,25 @@ int main(int argc, char* argv[])
 					event.channelID);
 
 					/** SEND BACK THE PACKET TO ALL CLIENT **/
-				{
-					std::string texte((char*)event.packet->data);
+				//{
+					//std::string texte((char*)event.packet->data);
 
-					packet = enet_packet_create(texte.c_str(), strlen(texte.c_str()) + 1, ENET_PACKET_FLAG_RELIABLE);
+					packet = enet_packet_create(event.packet->data, sizeof(event.packet->userData) + 1, ENET_PACKET_FLAG_RELIABLE);
 					/* Extend the packet so and append the string "foo", so it now */
 					/* contains "packetfoo\0"                                      */
-					enet_packet_resize(packet, strlen(texte.c_str()) + 1);
+					//enet_packet_resize(packet, sizeof(event.packet->userData) + 1);
+					packet->userData = event.packet->userData;
 					//strcpy(&packet->data[strlen("packet")], "foo");
 					/* Send the packet to the peer over channel id 0. */
 					/* One could also broadcast the packet by         */
 					/* enet_host_broadcast (host, 0, packet);         */
 
-					enet_peer_send(event.peer, 0, packet);
+					//enet_peer_send(event.peer, 0, packet);
 					enet_host_broadcast(server, 0, packet);
 
 					/* One could just use enet_host_service() instead. */
 					enet_host_flush(server);
-				}
+				//}
 
 				/* Clean up the packet now that we're done using it. */
 				enet_packet_destroy(event.packet);

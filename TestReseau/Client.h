@@ -18,6 +18,7 @@ public:
 	InputManager* GetInputManager();
 	NetworkManager* GetNetworkManager();
 	RenderManager* GetRenderManager();
+	bool GetIsRunning();
 
 	void Run();
 

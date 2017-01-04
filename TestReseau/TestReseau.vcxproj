@@ -152,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
+    <ClInclude Include="Command.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="RenderManager.h" />
@@ -160,6 +161,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
+    <ClCompile Include="Command.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="RenderManager.cpp" />

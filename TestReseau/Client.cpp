@@ -48,6 +48,11 @@ RenderManager* Client::GetRenderManager()
 	return _renderManager;
 }
 
+bool Client::GetIsRunning()
+{
+	return _isRunning;
+}
+
 void Client::Run()
 {
 
@@ -57,7 +62,6 @@ void Client::Run()
 	_renderManager->InitSFML();
 
 	_networkManager->InitializeNetwork();
-	_networkManager->JoinThreads();
 
 	while (_isRunning && _renderManager->IsWindowOpen())
 	{
@@ -71,6 +75,8 @@ void Client::Run()
 		_renderManager->Draw();
 
 	}
+
+	//_networkManager->JoinThreads();
 }
 
 void Client::Stop()

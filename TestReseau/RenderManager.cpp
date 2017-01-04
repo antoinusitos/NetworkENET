@@ -4,7 +4,7 @@
 
 RenderManager::RenderManager() : _windowWidth(800.f), _windowHeight(600.f)
 {
-
+	_conversation = new std::vector<std::string>();
 }
 
 RenderManager::~RenderManager()
@@ -47,6 +47,7 @@ void RenderManager::Draw()
 
 	_window.clear();
 	_window.draw(*_topRectangle);
+	RenderConversation();
 	_window.draw(*_bottomRectangle);
 	_window.draw(_text);
 	_window.display();
@@ -68,6 +69,11 @@ void RenderManager::UpdateInputText(std::string text)
 	_text.setString(text);
 }
 
+void RenderManager::ReceiveText(std::string text)
+{
+	_conversation->push_back(text);
+}
+
 void RenderManager::PollEvents()
 {
 	sf::Event event;
@@ -76,5 +82,20 @@ void RenderManager::PollEvents()
 	{
 		if (event.type == sf::Event::Closed)
 			_window.close();
+	}
+}
+
+void RenderManager::RenderConversation()
+{
+	sf::Text aText;
+	aText.setFont(_font);
+	aText.setCharacterSize(24);
+	aText.setFillColor(sf::Color::Red);
+
+	for (int i = 0; i < _conversation->size(); i++)
+	{
+		aText.setString(_conversation->at(i));
+		aText.setPosition(sf::Vector2f(10, 10 + i * 20));
+		_window.draw(aText);
 	}
 }

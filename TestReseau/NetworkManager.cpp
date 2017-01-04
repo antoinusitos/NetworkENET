@@ -4,27 +4,24 @@
 #include <iostream>
 #include <string>
 #include "Client.h"
+#include "RenderManager.h"
+#include "Command.h"
+#include <mutex>
+
+std::mutex mu;
 
 NetworkManager::NetworkManager(Client* theOwner)
 {
 	_owner = theOwner;
 }
 
-
 NetworkManager::~NetworkManager()
 {
-	enet_host_destroy(_client);
-	if (_first)
-	{
-		_first->join();
-		delete _first;
-	}
+	//enet_host_destroy(_client);
 }
 
 void NetworkManager::InitializeNetwork()
 {
-
-	//std::thread l(lol);
 
 	if (enet_initialize() != 0)
 	{
@@ -66,8 +63,9 @@ void NetworkManager::InitializeNetwork()
 	{
 		puts("Connection to localhost:1234 succeeded.");
 
-		_first = new std::thread(&NetworkManager::HandlesEvent, this);
-		_first->detach();
+		_eventThread = new std::thread(&NetworkManager::HandlesEvent, this);
+		
+		_eventThread->detach();
 	}
 	else
 	{
@@ -81,46 +79,65 @@ void NetworkManager::InitializeNetwork()
 
 void NetworkManager::JoinThreads()
 {
-	if (_first != nullptr)
+	if (_eventThread != nullptr)
 	{
-		//_first->join();
+		try 
+		{
+			if(_eventThread->joinable())
+				_eventThread->join();
+		}
+		catch (std::exception e)
+		{
+			std::cout << e.what() << std::endl;
+		}
 	}
+
+	//enet_host_destroy(_client);
 }
 
 void NetworkManager::HandlesEvent()
 {
-	/** HANDLES THE EVENT **/
-	printf("EVENT !");
+	/** HANDLES THE EVENTS **/
 
-	ENetEvent event;
-	/* Wait up to 1000 milliseconds for an event. */
-	while (enet_host_service(_client, &event, 1000) > 0)
+	//while (theOwner != nullptr && theOwner->GetIsRunning())
+	while (_owner != nullptr && _owner->GetIsRunning())
 	{
-		switch (event.type)
+		ENetEvent event;
+		/* Wait up to 1000 milliseconds for an event. */
+		while (enet_host_service(_client, &event, 1000) > 0)
 		{
-		case ENET_EVENT_TYPE_CONNECT:
-			printf("A new client connected from %x:%u.\n",
-				event.peer->address.host,
-				event.peer->address.port);
-			/* Store any relevant client information here. */
-			event.peer->data = "Client information";
-			break;
-		case ENET_EVENT_TYPE_RECEIVE:
-			printf("A packet of length %u containing %s was received from %s on channel %u.\n",
-			event.packet->dataLength,
-			event.packet->data,
-			event.peer->data,
-			event.channelID);
-			printf("%s \n", (char*)event.packet->data);
-			/* Clean up the packet now that we're done using it. */
-			enet_packet_destroy(event.packet);
+			switch (event.type)
+			{
+			case ENET_EVENT_TYPE_CONNECT:
+				printf("A new client connected from %x:%u.\n",
+					event.peer->address.host,
+					event.peer->address.port);
+				/* Store any relevant client information here. */
+				event.peer->data = "Client information";
+				break;
+			case ENET_EVENT_TYPE_RECEIVE:
+				/*printf("A packet of length %u containing %s was received from %s on channel %u.\n",
+					event.packet->dataLength,
+					event.packet->data,
+					event.peer->data,
+					event.channelID);*/
+				//printf("%s \n", (char*)event.packet->data);
+				{
+					Command* c = (Command*)event.packet->userData;
+					std::string s = std::string(c->GetCommand());
+					//Client* cl = *_owner.get();
+					//cl->GetRenderManager()->ReceiveText(s);
+				}
+				/* Clean up the packet now that we're done using it. */
+				enet_packet_destroy(event.packet);
 
-			break;
+				break;
 
-		case ENET_EVENT_TYPE_DISCONNECT:
-			printf("%s disconnected.\n", event.peer->data);
-			/* Reset the peer's client information. */
-			event.peer->data = NULL;
+			case ENET_EVENT_TYPE_DISCONNECT:
+				printf("%s disconnected.\n", event.peer->data);
+				/* Reset the peer's client information. */
+				event.peer->data = NULL;
+			}
 		}
 	}
 }
@@ -130,15 +147,19 @@ void NetworkManager::SendText(std::string text)
 	std::string name = _owner->GetClientName();
 	name += " : " + text;
 
+	Command* c = new Command(name);
+
 	if (text != "")
 	{
 		/* Create a reliable packet of size 7 containing "packet\0" */
-		ENetPacket * packet = enet_packet_create(name.c_str(),
-			strlen(name.c_str()) + 1,
+		ENetPacket* packet = enet_packet_create(c,
+			sizeof(c) + 1,
 			ENET_PACKET_FLAG_RELIABLE);
+
+		packet->userData = c;
 		/* Extend the packet so and append the string "foo", so it now */
 		/* contains "packetfoo\0"                                      */
-		enet_packet_resize(packet, strlen(name.c_str()) + 1);
+		//enet_packet_resize(packet, sizeof(c) * 2 + 1);
 
 		/* Send the packet to the peer over channel id 0. */
 		/* One could also broadcast the packet by         */

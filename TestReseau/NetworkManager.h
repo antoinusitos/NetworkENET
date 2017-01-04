@@ -22,7 +22,7 @@ public:
 private:
 	ENetHost* _client;
 
-	std::thread* _first;
+	std::thread* _eventThread;
 
 	Client* _owner;
 };
