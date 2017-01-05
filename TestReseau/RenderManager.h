@@ -9,7 +9,7 @@ public:
 	RenderManager();
 	~RenderManager();
 
-	void InitSFML();
+	void Init();
 	void Draw();
 
 	bool IsWindowOpen();

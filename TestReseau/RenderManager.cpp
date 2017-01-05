@@ -14,7 +14,7 @@ RenderManager::~RenderManager()
 	delete _bottomRectangle;
 }
 
-void RenderManager::InitSFML()
+void RenderManager::Init()
 {
 	// create the windows and all the sfml stuff
 	_window.create(sf::VideoMode(_windowWidth, _windowHeight), "Client");

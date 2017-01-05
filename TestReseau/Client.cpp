@@ -61,7 +61,7 @@ void Client::Run()
 
 	_renderManager->Init();
 
-	_networkManager->InitializeNetwork();
+	_networkManager->Init();
 
 	while (_isRunning && _renderManager->IsWindowOpen())
 	{
