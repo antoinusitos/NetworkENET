@@ -6,9 +6,6 @@
 #include "Client.h"
 #include "RenderManager.h"
 #include "Command.h"
-#include <mutex>
-
-std::mutex mu;
 
 NetworkManager::NetworkManager(Client* theOwner)
 {
@@ -17,18 +14,17 @@ NetworkManager::NetworkManager(Client* theOwner)
 
 NetworkManager::~NetworkManager()
 {
-	//enet_host_destroy(_client);
+
 }
 
-void NetworkManager::InitializeNetwork()
+bool NetworkManager::Init()
 {
-
+	_mutex.lock();
 	if (enet_initialize() != 0)
 	{
-		fprintf(stderr, "An error occurred while initializing ENet.\n");
-		return;
+		std::cout << "An error occurred while initializing ENet." << std::endl;
+		return false;
 	}
-	atexit(enet_deinitialize);
 
 	/** CREATE THE CLIENT **/
 
@@ -39,23 +35,24 @@ void NetworkManager::InitializeNetwork()
 		14400 / 8 /* 56K modem with 14 Kbps upstream bandwidth */);
 	if (_client == NULL)
 	{
-		fprintf(stderr, "An error occurred while trying to create an ENet client host.\n");
-		exit(EXIT_FAILURE);
+		std::cout << "An error occurred while trying to create an ENet client host." << std::endl;
+		//exit(EXIT_FAILURE);
+		return false;
 	}
 
 	ENetAddress address;
 	ENetEvent event;
-	ENetPeer* peer;
 
 	/* Connect to some.server.net:1234. */
 	enet_address_set_host(&address, "localhost");
 	address.port = 1234;
 	/* Initiate the connection, allocating the two channels 0 and 1. */
-	peer = enet_host_connect(_client, &address, 2, 0);
-	if (peer == NULL)
+	auto peer = enet_host_connect(_client, &address, 2, 0);
+	if (peer == nullptr)
 	{
-		fprintf(stderr, "No available peers for initiating an ENet connection.\n");
-		exit(EXIT_FAILURE);
+		std::cout << "No available peers for initiating an ENet connection." << std::endl;
+		//exit(EXIT_FAILURE);
+		return false;
 	}
 
 	if (enet_host_service(_client, &event, 5000) > 0 &&
@@ -63,9 +60,8 @@ void NetworkManager::InitializeNetwork()
 	{
 		puts("Connection to localhost:1234 succeeded.");
 
-		_eventThread = new std::thread(&NetworkManager::HandlesEvent, this);
-		
-		_eventThread->detach();
+		_isRunning = true;
+		_eventThread = std::make_unique<std::thread>(&NetworkManager::HandlesEvent, this);
 	}
 	else
 	{
@@ -75,16 +71,19 @@ void NetworkManager::InitializeNetwork()
 		enet_peer_reset(peer);
 		puts("Connection to localhost:1234 failed.");
 	}
+
+	return true;
 }
 
-void NetworkManager::JoinThreads()
+void NetworkManager::Shutdown()
 {
 	if (_eventThread != nullptr)
 	{
-		try 
+		try
 		{
-			if(_eventThread->joinable())
-				_eventThread->join();
+			_isRunning = false;
+			_eventThread->join();
+			_eventThread.reset();
 		}
 		catch (std::exception e)
 		{
@@ -92,15 +91,15 @@ void NetworkManager::JoinThreads()
 		}
 	}
 
-	//enet_host_destroy(_client);
+	enet_deinitialize();
+	enet_host_destroy(_client);
 }
 
 void NetworkManager::HandlesEvent()
 {
 	/** HANDLES THE EVENTS **/
 
-	//while (theOwner != nullptr && theOwner->GetIsRunning())
-	while (_owner != nullptr && _owner->GetIsRunning())
+	while (_isRunning)
 	{
 		ENetEvent event;
 		/* Wait up to 1000 milliseconds for an event. */
@@ -109,9 +108,9 @@ void NetworkManager::HandlesEvent()
 			switch (event.type)
 			{
 			case ENET_EVENT_TYPE_CONNECT:
-				printf("A new client connected from %x:%u.\n",
-					event.peer->address.host,
-					event.peer->address.port);
+				std::cout << "A new client connected from %x:%u.\n" <<
+					event.peer->address.host <<
+					event.peer->address.port << std::endl;
 				/* Store any relevant client information here. */
 				event.peer->data = "Client information";
 				break;
@@ -134,7 +133,7 @@ void NetworkManager::HandlesEvent()
 				break;
 
 			case ENET_EVENT_TYPE_DISCONNECT:
-				printf("%s disconnected.\n", event.peer->data);
+				std::cout << "%s disconnected.\n" << event.peer->data << std::endl;
 				/* Reset the peer's client information. */
 				event.peer->data = NULL;
 			}
@@ -142,7 +141,7 @@ void NetworkManager::HandlesEvent()
 	}
 }
 
-void NetworkManager::SendText(std::string text)
+void NetworkManager::SendText(const std::string& text)
 {
 	std::string name = _owner->GetClientName();
 	name += " : " + text;

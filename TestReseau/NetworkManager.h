@@ -1,7 +1,9 @@
 #pragma once
 
 #include <thread>
+#include <memory>
 #include <enet/enet.h>
+#include <mutex>
 
 class Client;
 
@@ -11,19 +13,24 @@ public:
 	NetworkManager(Client* theOwner);
 	~NetworkManager();
 
-	void InitializeNetwork();
+	bool Init();
 
-	void JoinThreads();
+	void Shutdown();
+
+	void SendText(const std::string& text);
+
+private:
 
 	void HandlesEvent();
 
-	void SendText(std::string text);
-
-private:
 	ENetHost* _client;
 
-	std::thread* _eventThread;
+	std::unique_ptr<std::thread> _eventThread;
 
 	Client* _owner;
+
+	volatile bool _isRunning;
+
+	std::mutex _mutex;
 };
 

@@ -5,13 +5,13 @@
 class Command
 {
 public:
-	Command(std::string theCommand);
+	Command(const std::string& theCommand);
 	~Command();
 
-	std::string GetCommand();
+	const std::string& GetCommand() const;
 
 private:
 	int _id;
-	std::string _command;
+	const std::string& _command;
 };
 

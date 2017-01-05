@@ -1,17 +1,17 @@
 #include "stdafx.h"
 #include "Command.h"
 
-Command::Command(std::string theCommand)
+Command::Command(const std::string& theCommand)
+	: _command(theCommand)
+	, _id(123456)
 {
-	_id = 123456;
-	_command = theCommand;
 }
 
 Command::~Command()
 {
 }
 
-std::string Command::GetCommand()
+const std::string& Command::GetCommand() const
 {
 	return _command;
 }

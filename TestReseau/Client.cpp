@@ -33,22 +33,22 @@ char* Client::GetClientName()
 	return _clientName;
 }
 
-InputManager* Client::GetInputManager()
+InputManager* Client::GetInputManager() const
 {
 	return _inputManager;
 }
 
-NetworkManager* Client::GetNetworkManager()
+NetworkManager* Client::GetNetworkManager() const
 {
 	return _networkManager;
 }
 
-RenderManager* Client::GetRenderManager()
+RenderManager* Client::GetRenderManager() const
 {
 	return _renderManager;
 }
 
-bool Client::GetIsRunning()
+bool Client::GetIsRunning() const
 {
 	return _isRunning;
 }
@@ -59,7 +59,7 @@ void Client::Run()
 	// galeplay loop
 	_isRunning = true;
 
-	_renderManager->InitSFML();
+	_renderManager->Init();
 
 	_networkManager->InitializeNetwork();
 

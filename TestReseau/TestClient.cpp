@@ -8,10 +8,8 @@
 
 int main(int argc, char* argv[]) 
 {
-	Client* c = new Client();
-	c->Run();
+	Client c;
+	c.Run();
 
-	if(c)
-		delete c;
 	return 0;
 }

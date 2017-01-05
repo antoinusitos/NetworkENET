@@ -15,10 +15,10 @@ public:
 	void SetClientName(char* theName);
 	char* GetClientName();
 
-	InputManager* GetInputManager();
-	NetworkManager* GetNetworkManager();
-	RenderManager* GetRenderManager();
-	bool GetIsRunning();
+	InputManager* GetInputManager() const;
+	NetworkManager* GetNetworkManager() const;
+	RenderManager* GetRenderManager() const;
+	bool GetIsRunning() const;
 
 	void Run();
 
